@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.7'
+    id "com.diffplug.gradle.spotless" version "3.26.0"
+}
+
+group 'frc8'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+compileJava {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+javafx {
+    version = "12.0.1"
+    modules = ['javafx.controls']
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://clojars.org/repo" }
+}
+
+spotless {
+    java {
+        importOrder 'java', 'javax', 'org', 'com', 'edu'
+        removeUnusedImports()
+        eclipse().configFile 'spotless.eclipseformat.xml'
+    }
+    freshmark {
+        target 'README.md', 'CONTRIBUTING.md'
+        propertiesFile('gradle/wrapper/gradle-wrapper.properties')
+        properties {
+            it.put('key', 'value')
+        }
+    }
+}
+
+dependencies {
+    compile 'kryonet:kryonet:2.21'
+    compile group: 'com.1stleg', name: 'jnativehook', version: '2.1.0'
+    compile 'com.esotericsoftware:kryo:4.0.2'
+    compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
+    compile 'com.fasterxml:jackson-module-json-org:0.9.1'
+    compile fileTree(dir: 'lib', include: ['*.jar'])
+    compile 'org.gillius:jfxutils:1.0'
+}
+
+
+mainClassName = 'com.palyrobotics.Processes'
+
+jar {
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': 'com.palyrobotics.Processes'
+    }
+}
+
+task spotlessApplyBuildRun(type: GradleBuild) {
+    tasks = ['spotlessApply', 'build', 'run']
+}
