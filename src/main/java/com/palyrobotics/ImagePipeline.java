@@ -88,6 +88,7 @@ public class ImagePipeline {
 	private long mFps = 0;
 
 	private void drawBallContours() {
+		HighGui.imshow("Original", mUnprocessedStream);
 		preprocessImage();
 		findContours();
 		if (contourExists()) {
@@ -136,6 +137,7 @@ public class ImagePipeline {
 		final Scalar lowerBoundHSV = new Scalar(Tuner.sHValMin, Tuner.sSValMin, Tuner.sVValMin);
 		final Scalar upperBoundHSV = new Scalar(Tuner.sHValMax, Tuner.sSValMax, Tuner.sVValMax);
 		Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
+		HighGui.imshow("Mask", mFrameHSV);
 		Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL,
 				Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
 	}
