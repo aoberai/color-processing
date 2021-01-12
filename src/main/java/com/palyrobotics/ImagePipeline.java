@@ -3,6 +3,7 @@ package com.palyrobotics;
 import static org.opencv.imgproc.Imgproc.FONT_HERSHEY_PLAIN;
 
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 
 import org.opencv.core.*;
@@ -27,16 +28,20 @@ import com.palyrobotics.config.VisionConfig;
  */
 public class ImagePipeline {
 
-	static {
-		// The OpenCV jar just contains a wrapper that allows us to interface with the
-		// implementation of OpenCV written in C++
-		// So, we have to load those C++ libraries explicitly and linked them properly.
-		// Just having the jars is not sufficient, OpenCV must be installed into the
-		// filesystem manually.
-		// I prefer to build it from source using CMake
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-	}
+      static {
+         // The OpenCV jar just contains a wrapper that allows us to interface with the implementation of OpenCV written in C++
+         // So, we have to load those C++ libraries explicitly and linked them properly.
+         // Just having the jars is not sufficient, OpenCV must be installed into the filesystem manually.
+         // I prefer to build it from source using CMake
+         if (System.getProperty("os.name").contains("Windows")) {
+             System.load(new File("./lib/" + Core.NATIVE_LIBRARY_NAME).getAbsolutePath() + ".dll");
+         } else if (System.getProperty("os.name").contains("Linux")) {
+             System.load(new File("./lib/lib" + Core.NATIVE_LIBRARY_NAME).getAbsolutePath() + ".so");
+         } else {
+             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+         }
+     }
 
 	private static final ImagePipeline sImagePipeline = new ImagePipeline();
 	private final VisionConfig mVisionConfig = Configs.get(VisionConfig.class);
@@ -88,7 +93,7 @@ public class ImagePipeline {
 	private long mFps = 0;
 
 	private void drawBallContours() {
-		HighGui.imshow("Original", mUnprocessedStream);
+		Imgproc.resize(mCaptureMatHSV, mCaptureMatHSV, new Size(320, 240));
 		preprocessImage();
 		findContours();
 		if (contourExists()) {
@@ -138,6 +143,7 @@ public class ImagePipeline {
 		final Scalar upperBoundHSV = new Scalar(Tuner.sHValMax, Tuner.sSValMax, Tuner.sVValMax);
 		Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
 		HighGui.imshow("Mask", mFrameHSV);
+		HighGui.moveWindow("Mask", 350, 20);
 		Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL,
 				Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
 	}
@@ -183,10 +189,13 @@ public class ImagePipeline {
 	private boolean readFrame() {
 		if (mVideoCapture.read(mCaptureMatHSV)) {
 			mUnprocessedStream = mCaptureMatHSV.clone(); // image is cloned before mCaptureHSV becomes processed and
+			Imgproc.resize(mUnprocessedStream, mUnprocessedStream, new Size(320, 240));
+			HighGui.imshow("Original", mUnprocessedStream);
 			if (mVisionConfig.showImage) {
 				drawBallContours(); // edited with visual contours
 				displayFPS();
 				HighGui.imshow("Vision", mCaptureMatHSV);
+				HighGui.moveWindow("Vision", 700, 20);
 				HighGui.waitKey(1);
 			}
 			return Imgcodecs.imencode(".jpg", mFrameHSV, mStreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
