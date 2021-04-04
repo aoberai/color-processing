@@ -13,7 +13,6 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
-import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
 
 import com.palyrobotics.config.Configs;
@@ -28,20 +27,21 @@ import com.palyrobotics.config.VisionConfig;
  */
 public class ImagePipeline {
 
-
-      static {
-         // The OpenCV jar just contains a wrapper that allows us to interface with the implementation of OpenCV written in C++
-         // So, we have to load those C++ libraries explicitly and linked them properly.
-         // Just having the jars is not sufficient, OpenCV must be installed into the filesystem manually.
-         // I prefer to build it from source using CMake
-         if (System.getProperty("os.name").contains("Windows")) {
-             System.load(new File("./lib/" + Core.NATIVE_LIBRARY_NAME).getAbsolutePath() + ".dll");
-         } else if (System.getProperty("os.name").contains("Linux")) {
-             System.load(new File("./lib/lib" + Core.NATIVE_LIBRARY_NAME).getAbsolutePath() + ".so");
-         } else {
-             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-         }
-     }
+	static {
+		// The OpenCV jar just contains a wrapper that allows us to interface with the
+		// implementation of OpenCV written in C++
+		// So, we have to load those C++ libraries explicitly and linked them properly.
+		// Just having the jars is not sufficient, OpenCV must be installed into the
+		// filesystem manually.
+		// I prefer to build it from source using CMake
+		if (System.getProperty("os.name").contains("Windows")) {
+			System.load(new File("./lib/" + Core.NATIVE_LIBRARY_NAME).getAbsolutePath() + ".dll");
+		} else if (System.getProperty("os.name").contains("Linux")) {
+			System.load("/usr/lib/jni/libopencv_java420.so");
+		} else {
+			System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		}
+	}
 
 	private static final ImagePipeline sImagePipeline = new ImagePipeline();
 	private final VisionConfig mVisionConfig = Configs.get(VisionConfig.class);
@@ -93,7 +93,8 @@ public class ImagePipeline {
 	private long mFps = 0;
 
 	private void drawBallContours() {
-		Imgproc.resize(mCaptureMatHSV, mCaptureMatHSV, new Size(320, 240));
+		Imgproc.resize(mCaptureMatHSV, mCaptureMatHSV,
+				new Size(mVisionConfig.captureWidth, mVisionConfig.captureHeight));
 		preprocessImage();
 		findContours();
 		if (contourExists()) {
@@ -142,6 +143,8 @@ public class ImagePipeline {
 		final Scalar lowerBoundHSV = new Scalar(Tuner.sHValMin, Tuner.sSValMin, Tuner.sVValMin);
 		final Scalar upperBoundHSV = new Scalar(Tuner.sHValMax, Tuner.sSValMax, Tuner.sVValMax);
 		Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
+		System.out.println(lowerBoundHSV);
+		System.out.println(upperBoundHSV);
 		HighGui.imshow("Mask", mFrameHSV);
 		HighGui.moveWindow("Mask", 350, 20);
 		Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL,
@@ -215,7 +218,8 @@ public class ImagePipeline {
 	}
 
 	void setCaptureParameters() {
-//		mVideoCapture.set(Videoio.CAP_PROP_FOURCC, VideoWriter.fourcc('H', '2', '6', '4'));
+		// mVideoCapture.set(Videoio.CAP_PROP_FOURCC, VideoWriter.fourcc('H', '2', '6',
+		// '4'));
 		mVideoCapture.set(Videoio.CAP_PROP_AUTO_EXPOSURE, 0.25); // setting exposure to manual set mode
 		mVideoCapture.set(Videoio.CAP_PROP_FRAME_WIDTH, mVisionConfig.captureWidth);
 		mVideoCapture.set(Videoio.CAP_PROP_FRAME_HEIGHT, mVisionConfig.captureHeight);

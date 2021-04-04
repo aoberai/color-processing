@@ -31,7 +31,7 @@ public class Tuner extends JPanel {
 	private static JSlider sHValMaxSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 15);
 	private static JSlider sSValMaxSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 206);
 	private static JSlider sVValMaxSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 255);
-	private static JSlider sAreaFilterSlider = new JSlider(JSlider.HORIZONTAL, 100, 100000, 10000);
+	private static JSlider sAreaFilterSlider = new JSlider(JSlider.HORIZONTAL, 0, 100000, 10000);
 	private static JSlider sBlurAmountSlider = new JSlider(JSlider.HORIZONTAL, 10, 100, 50);
 
 	private static JFrame mJFrame = new JFrame();
